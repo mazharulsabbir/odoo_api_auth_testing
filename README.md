@@ -1,16 +1,48 @@
-# odoo_api_testing
+```dart
+import 'dart:convert' as convert;
 
-A new Flutter project.
+import 'package:http/http.dart' as http;
 
-## Getting Started
+class ApiService {
+  static Future<http.Response> login(
+      {String? username, String? password}) async {
+    String _body = convert.jsonEncode({
+      "params": {
+        "db": "odoo13",
+        "login": username ?? "sabbir.apps@daffodil-bd.com",
+        "password": password ?? "odoo13"
+      }
+    });
 
-This project is a starting point for a Flutter application.
+    try {
+      var url =
+          Uri.parse('http://192.168.10.131:8013/web/session/authenticate');
+      http.Response response = await http.post(
+        url,
+        body: _body,
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+      );
 
-A few resources to get you started if this is your first Flutter project:
+      print('Response status: ${response.statusCode}');
+      print('Response body: ${response.body}');
 
-- [Lab: Write your first Flutter app](https://flutter.dev/docs/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://flutter.dev/docs/cookbook)
+      String? cookie = response.headers['set-cookie']?.split(';').first;
+      print('Response Headers: $cookie');
 
-For help getting started with Flutter, view our
-[online documentation](https://flutter.dev/docs), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+      var url2 = Uri.parse('http://192.168.10.131:8013/api/notification');
+      http.Response? response2 = await http.get(url2, headers: {
+        'Cookie': '$cookie',
+        'Accept': 'application/json',
+        // 'Content-Type': 'application/json'
+      });
+      print('Response Headers: ${response2.headers}');
+      return Future.value(response2);
+    } catch (e) {
+      return Future.error(e);
+    }
+  }
+}
+```
